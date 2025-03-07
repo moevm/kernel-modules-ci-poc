@@ -6,26 +6,44 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = { self, nixpkgs, nixos-generators, ... }: {
+
+  outputs = { self, nixpkgs, nixos-generators, ... }@inputs: {
     packages.x86_64-linux = {
       qcow = nixos-generators.nixosGenerate {
         system = "x86_64-linux";
-        modules = [
-          # you can include your own nixos configuration here, i.e.
-          # ./configuration.nix
-        ];
         format = "qcow";
-        
-        # optional arguments:
-        # explicit nixpkgs and lib:
-        # pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        # lib = nixpkgs.legacyPackages.x86_64-linux.lib;
-        # additional arguments to pass to modules:
-        # specialArgs = { myExtraArg = "foobar"; };
-        
-        # you can also define your own custom formats
-        # customFormats = { "myFormat" = <myFormatModule>; ... };
-        # format = "myFormat";
+        #specialArgs = { inherit inputs; };
+        modules = [
+          ({ config, pkgs, ... }:
+            let
+              checkerServer = pkgs.stdenv.mkDerivation {
+                name = "checker-server";
+                src = ./checker_server.py;
+                phases = [ "installPhase" ];
+                installPhase = ''
+                  install -Dm755 $src $out/bin/checker_server
+                '';
+              };
+            in
+            {
+              environment.systemPackages = [ pkgs.python3 checkerServer ];
+
+              systemd.services.checker-server = {
+                wantedBy = [ "multi-user.target" ];
+                serviceConfig = {
+                  ExecStart = "${pkgs.python3}/bin/python3 ${checkerServer}/bin/checker_server";
+                  Restart = "on-failure";
+                };
+              };
+
+              networking.firewall.enable = false;
+
+              users.users.root.password = "root";
+
+              system.stateVersion = "24.11";
+            }
+          )
+        ];
       };
     };
   };
