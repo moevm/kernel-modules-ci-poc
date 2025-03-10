@@ -14,7 +14,7 @@
         format = "qcow";
         #specialArgs = { inherit inputs; };
         modules = [
-          ({ config, pkgs, ... }:
+          ({ config, pkgs, lib, ... }:
             let
               checkerServer = pkgs.stdenv.mkDerivation {
                 name = "checker-server";
@@ -26,7 +26,12 @@
               };
             in
             {
-              environment.systemPackages = [ pkgs.python3 checkerServer ];
+              environment.systemPackages = [
+                pkgs.python3
+                checkerServer
+                pkgs.linux.dev
+                pkgs.gnumake
+              ] ++ pkgs.linux.nativeBuildInputs ++ pkgs.linux.depsBuildBuild;
 
               systemd.services.checker-server = {
                 wantedBy = [ "multi-user.target" ];
@@ -39,6 +44,13 @@
               networking.firewall.enable = false;
 
               users.users.root.password = "root";
+
+              nix = {
+                # make nix3 commands consistent with the flake
+                registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
+
+                extraOptions = "experimental-features = nix-command flakes";
+              };
 
               system.stateVersion = "24.11";
             }
