@@ -4,6 +4,7 @@ import xmlrpc.server
 import subprocess
 import os
 import tempfile
+import pickle
 
 
 class CheckerServer:
@@ -14,6 +15,7 @@ class CheckerServer:
 
     def register_functions(self):
         self.server.register_function(self.write_file)
+        self.server.register_function(self.read_file)
         self.server.register_function(self.stat)
         self.server.register_function(self.run_command)
 
@@ -28,12 +30,12 @@ class CheckerServer:
         with open(path, "rb") as f:
             return f.readall()
 
-    def stat(self, path: os.path) -> os.stat_result:
-        return os.stat(path)
+    def stat(self, path: os.path) -> bytes:
+        return pickle.dumps(os.stat(path))
 
     def run_command(self,
                     command: list[str]) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(command, capture_output=True)
+        return pickle.dumps(subprocess.run(command, capture_output=True))
 
 
 if __name__ == "__main__":
