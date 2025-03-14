@@ -19,24 +19,49 @@
               checkerServer = pkgs.stdenv.mkDerivation {
                 name = "checker-server";
                 src = ./checker_server.py;
-                phases = [ "installPhase" ];
+                phases = [ "installPhase" "postFixup" ];
+
+                buildInputs = with pkgs; [
+                  nix
+                  python3
+                  gnumake
+                  bash
+                  gawk
+                  kmod
+                  util-linux
+                  linux.dev
+                ] ++ pkgs.linux.nativeBuildInputs ++ pkgs.linux.depsBuildBuild;
+
+                nativeBuildInputs = [ pkgs.makeWrapper ];
+
                 installPhase = ''
                   install -Dm755 $src $out/bin/checker_server
+                '';
+
+                postFixup = ''
+                  wrapProgram $out/bin/checker_server \
+                    --prefix PATH : ${pkgs.lib.makeBinPath (with pkgs; [
+                      nix
+                      python3
+                      gnumake
+                      bash
+                      gawk
+                      kmod
+                      util-linux
+                      linux.dev
+                    ] ++ pkgs.linux.nativeBuildInputs ++ pkgs.linux.depsBuildBuild)}
                 '';
               };
             in
             {
               environment.systemPackages = [
-                pkgs.python3
                 checkerServer
-                pkgs.linux.dev
-                pkgs.gnumake
-              ] ++ pkgs.linux.nativeBuildInputs ++ pkgs.linux.depsBuildBuild;
+              ];
 
               systemd.services.checker-server = {
                 wantedBy = [ "multi-user.target" ];
                 serviceConfig = {
-                  ExecStart = "${pkgs.python3}/bin/python3 ${checkerServer}/bin/checker_server";
+                  ExecStart = "${checkerServer}/bin/checker_server";
                   Restart = "on-failure";
                 };
               };
