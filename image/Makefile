@@ -12,4 +12,7 @@ container-build:
 		localhost/nix-image-builder:latest \
 		make build
 
-.PHONY: build container-build
+clean:
+	rm -f nixos.qcow2
+
+.PHONY: build container-build clean
