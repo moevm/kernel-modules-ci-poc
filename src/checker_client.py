@@ -4,10 +4,6 @@ import subprocess
 import pickle
 
 
-class CommandFailedException(Exception):
-    pass
-
-
 class CheckerClient:
 
     def __init__(self, server_host="localhost", server_port=8000):
@@ -32,29 +28,53 @@ class Checker:
     def __init__(self, server_host="localhost", server_port=8000):
         self.client = CheckerClient(server_host, server_port)
 
-    def compile_module(self, source_file: bytes, module_name: str):
+    def compile_module(self, source_file: bytes,
+                       module_name: str) -> subprocess.CompletedProcess:
         """Compile a kernel module on the remote server"""
-        pass
+        self.client.write_file(f"/tmp/{module_name}.c", source_file)
+        self.client.write_file("/tmp/Makefile",
+                               f"obj-m += {module_name}.o\n".encode())
+
+        result = self.client.run_command([
+            "nix", "build", "nixpkgs#linux.dev", "--no-link",
+            "--print-out-paths"
+        ])
+        result.check_returncode()
+
+        nix_path = result.stdout.decode().splitlines()[0]
+        kernel_version = self.get_kernel_version()
+        lib_modules_build_path = os.path.join(nix_path, "lib/modules",
+                                              kernel_version, "build")
+        result = self.client.run_command(
+            ["make", "-C", lib_modules_build_path, "M=/tmp", "modules"])
+        result.check_returncode()
+
+        return result
 
     def load_module(self, module_name: str):
         """Load a compiled module on the remote server"""
-        pass
+        result = self.client.run_command(
+            ["insmod", os.path.join("/tmp", f"{module_name}.ko")])
+        result.check_returncode()
 
     def unload_module(self, module_name: str):
         """Unload a module from the remote server"""
-        return self.client.run_command(["rmmod", module_name])
+        result = self.client.run_command(["rmmod", module_name])
+        result.check_returncode()
 
     def get_kernel_version(self) -> str:
         result = self.client.run_command(["uname", "-r"])
-        if result.returncode != 0:
-            raise CommandFailedException("dmesg: " +
-                                         str(result.stderr).strip())
+        result.check_returncode()
+        return result.stdout.decode().strip()
+
+    def get_kernel_log(self) -> str:
+        result = self.client.run_command(["dmesg"])
+        result.check_returncode()
         return result.stdout.decode().strip()
 
     def hello(self) -> str:
         result = self.client.run_command(["echo", "Hello, World!"])
-        if result.returncode != 0:
-            raise CommandFailedException()
+        result.check_returncode()
         return result.stdout.decode().strip()
 
 

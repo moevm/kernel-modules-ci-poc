@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 import xmlrpc.server
+import xmlrpc.client
 import subprocess
 import os
 import tempfile
 import pickle
+import shutil
 
 
 class CheckerServer:
@@ -22,13 +24,13 @@ class CheckerServer:
     def start(self):
         self.server.serve_forever()
 
-    def write_file(self, path: os.path, content: bytes) -> int:
+    def write_file(self, path: os.path, content: xmlrpc.client.Binary) -> int:
         with open(path, "wb") as f:
-            return f.write(content)
+            return f.write(content.data)
 
     def read_file(self, path: os.path) -> bytes:
         with open(path, "rb") as f:
-            return f.readall()
+            return f.read()
 
     def stat(self, path: os.path) -> bytes:
         return pickle.dumps(os.stat(path))
