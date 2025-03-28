@@ -14,6 +14,8 @@
         format = "qcow";
         #specialArgs = { inherit inputs; };
         modules = [
+          "${nixpkgs}/nixos/modules/profiles/minimal.nix"
+          "${nixpkgs}/nixos/modules/profiles/headless.nix"
           ({ config, pkgs, lib, ... }:
             let
               checkerServer = pkgs.stdenv.mkDerivation {
