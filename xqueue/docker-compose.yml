@@ -1,0 +1,31 @@
+version: '3.8'
+
+networks:
+  mooc-net:
+    driver: bridge
+
+services:
+
+  xqueue:
+    image: dvivanov/xqueue:18022025
+    container_name: xqueue
+    networks:
+      - mooc-net
+    ports:
+      - "8000:7777"
+    volumes:
+      - ./settings.py:/app/xqueue/xqueue/settings.py
+      - /var/www/mooc-linux-programming/local-lc:/app/xqueue/local-lc
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: mooc-client
+    depends_on:
+      - xqueue
+    networks:
+      - mooc-net
+    volumes:
+      - /var/www/mooc-linux-programming:/var/www/mooc-linux-programming
+
