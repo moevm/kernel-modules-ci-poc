@@ -18,6 +18,8 @@
           "${nixpkgs}/nixos/modules/profiles/headless.nix"
           ({ config, pkgs, lib, ... }:
             let
+              magicDirectory = "/kernel-sources";
+
               checkerServer = pkgs.stdenv.mkDerivation {
                 name = "checker-server";
                 src = ./checker_server.py;
@@ -59,6 +61,14 @@
               environment.systemPackages = [
                 checkerServer
               ];
+
+              # Directly link linux.dev to a fixed directory
+              system.activationScripts.linkLinuxDev = {
+                text = ''
+                  ln -sfn ${pkgs.linux.dev} ${magicDirectory}
+                '';
+                deps = [ ];
+              };
 
               systemd.services.checker-server = {
                 wantedBy = [ "multi-user.target" ];
