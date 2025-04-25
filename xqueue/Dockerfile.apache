@@ -1,0 +1,35 @@
+FROM python:3.10-slim
+
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      apache2 \
+      libapache2-mod-wsgi-py3 \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir flask requests
+
+COPY config/mooc_apache2.conf    /etc/apache2/sites-available/mooc.conf
+COPY config/mooc_status_stub.conf /etc/apache2/sites-available/mooc_status_stub.conf
+
+RUN mkdir -p /var/www/mooc-linux-programming/mooc_status_stub \
+ && chown -R www-data:www-data /var/www/mooc-linux-programming
+
+RUN a2enmod wsgi \
+ && a2ensite mooc.conf \
+ && a2ensite mooc_status_stub.conf \
+ && a2dissite 000-default.conf
+
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
+WORKDIR /app
+COPY mooc.wsgi /app/mooc.wsgi
+
+COPY linuxEBserv /app/linuxEBserv
+RUN mkdir -p /app/xqueue_watcher/conf.d/conf.d
+COPY xqueue_watcher/conf.d/local.json /app/xqueue_watcher/conf.d/conf.d/config.json
+
+RUN chown -R www-data:www-data /app
+
+EXPOSE 80
+CMD ["apache2ctl", "-D", "FOREGROUND"]
+
