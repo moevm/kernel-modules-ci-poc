@@ -86,7 +86,11 @@
                 # make nix3 commands consistent with the flake
                 registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
 
-                extraOptions = "experimental-features = nix-command flakes";
+                settings.experimental-features = "nix-command flakes";
+
+                # We don't actually need Nix on our system
+                # because everything is done at build-time
+                enable = false;
               };
 
               system.stateVersion = "24.11";
