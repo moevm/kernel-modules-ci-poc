@@ -3,6 +3,8 @@ import os
 import subprocess
 import pickle
 
+KERNEL_SOURCES_PATH = "/kernel-sources"
+
 
 class CheckerClient:
 
@@ -35,16 +37,12 @@ class Checker:
         self.client.write_file("/tmp/Makefile",
                                f"obj-m += {module_name}.o\n".encode())
 
-        result = self.client.run_command([
-            "nix", "build", "nixpkgs#linux.dev", "--no-link",
-            "--print-out-paths"
-        ])
-        result.check_returncode()
-
-        nix_path = result.stdout.decode().splitlines()[0]
         kernel_version = self.get_kernel_version()
-        lib_modules_build_path = os.path.join(nix_path, "lib/modules",
-                                              kernel_version, "build")
+        # Use the fixed path directly
+        lib_modules_build_path = os.path.join(KERNEL_SOURCES_PATH,
+                                              "lib/modules", kernel_version,
+                                              "build")
+
         result = self.client.run_command(
             ["make", "-C", lib_modules_build_path, "M=/tmp", "modules"])
         result.check_returncode()

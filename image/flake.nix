@@ -18,6 +18,8 @@
           "${nixpkgs}/nixos/modules/profiles/headless.nix"
           ({ config, pkgs, lib, ... }:
             let
+              magicDirectory = "/kernel-sources";
+
               checkerServer = pkgs.stdenv.mkDerivation {
                 name = "checker-server";
                 src = ./checker_server.py;
@@ -60,6 +62,14 @@
                 checkerServer
               ];
 
+              # Directly link linux.dev to a fixed directory
+              system.activationScripts.linkLinuxDev = {
+                text = ''
+                  ln -sfn ${pkgs.linux.dev} ${magicDirectory}
+                '';
+                deps = [ ];
+              };
+
               systemd.services.checker-server = {
                 wantedBy = [ "multi-user.target" ];
                 serviceConfig = {
@@ -76,7 +86,11 @@
                 # make nix3 commands consistent with the flake
                 registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
 
-                extraOptions = "experimental-features = nix-command flakes";
+                settings.experimental-features = "nix-command flakes";
+
+                # We don't actually need Nix on our system
+                # because everything is done at build-time
+                enable = false;
               };
 
               system.stateVersion = "24.11";
