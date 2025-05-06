@@ -1,0 +1,14 @@
+{
+    "local-lc": {
+        "SERVER": "http://xqueue:7777",
+        "LMC_CALLBACK_SERVER": "http://mooc-linux-programming",
+        "LMS_KEY": "MOOC_LMS_KEY",
+        "CONNECTIONS": 1,
+        "AUTH": ["user", "pass"],
+        "HANDLERS": [
+            {
+                "HANDLER": "xqueue_watcher.grader.Grader"
+            }
+        ]
+    }
+}

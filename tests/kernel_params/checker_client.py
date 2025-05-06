@@ -46,7 +46,6 @@ class Checker:
         result = self.client.run_command(
             ["make", "-C", lib_modules_build_path, "M=/tmp", "modules"])
         result.check_returncode()
-
         return result
 
     def load_module(self, module_name: str):
@@ -78,5 +77,5 @@ class Checker:
 
 if __name__ == "__main__":
     checker = Checker()
-    print(checker.hello())
-    print("Kernel version:", checker.get_kernel_version())
+    #print(checker.hello())
+    #print("Kernel version:", checker.get_kernel_version())

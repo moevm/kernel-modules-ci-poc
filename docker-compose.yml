@@ -1,0 +1,56 @@
+version: '3.8'
+
+networks:
+  mooc-net:
+    driver: bridge
+   
+volumes:
+  shared-local-lc:
+  shared-task-folder:
+ 
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.apache
+    image: mooc-apache:latest
+    container_name: mooc-web
+    hostname: mooc-linux-programming
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - GRADER_CONF=/app/xqueue_watcher/conf.d/conf.d/config.json
+    volumes:
+      - ./logs:/var/log/app
+      - shared-task-folder:/app/task_folder
+    networks:
+      - mooc-net
+  xqueue:
+    image: dvivanov/xqueue:18022025
+    container_name: xqueue
+    networks:
+      - mooc-net
+    ports:
+      - "8000:7777"
+    volumes:
+      - ./settings.py:/app/xqueue/xqueue/settings.py
+      - shared-local-lc:/app/xqueue/local-lc
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: mooc-client
+    depends_on:
+      - xqueue
+    networks:
+      - mooc-net
+    volumes:
+      - shared-local-lc:/var/www/mooc-linux-programming/local-lc
+      - shared-task-folder:/app/task_folder
+      - ./image/nixos.qcow2:/var/lib/images/nixos.qcow2:ro
+    devices:
+      - /dev/kvm:/dev/kvm
+    cap_add:
+      - NET_ADMIN

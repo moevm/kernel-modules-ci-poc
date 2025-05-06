@@ -1,15 +1,32 @@
-Host system requirements:
-- QEMU
-- python3
-- Podman or Docker
-
-Basic testcase:
-```ShellSession
-$ cd image
-$ make container-build
- # or "make DOCKER=docker container-build" if you have Docker
- # or just "make" if you have NixOS on your host
-$ qemu-system-x86_64 -drive file=nixos.qcow2 -nographic -nic user,hostfwd=tcp::8000-:8000 -m 2G -smp 2 -enable-kvm
- # another terminal:
-$ ./src/test.py test/test_module.c
+## Сборка и запуск докер-образов
 ```
+cd image
+docker build -t localhost/nix-image-builder:latest . 
+make DOCKER=docker container-build
+```
+
+```
+cd ..
+docker compose build
+docker compose up -d
+```
+
+## Тестирование
+
+```
+docker-compose exec web bash
+./tst/integration/heavy_test.sh --url http://mooc-linux-programming/ kernel_params
+```
+
+Тесты должны завершиться с exit_code=0 и следующим текстом в конце: 
+
+<pre>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+////////////////////////////////////////////////////
+[SUCCESS] All tests successfuly completed!
+</pre>
+
+
+## Отладка
+Для просмотра логов можно написать
+`docker-compose logs -f web xqueue client`
