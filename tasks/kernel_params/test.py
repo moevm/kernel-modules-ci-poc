@@ -9,7 +9,7 @@ def main(source_path: str) -> int:
     module_name = os.path.splitext(os.path.basename(source_path))[0]
     source_bytes = open(source_path, "rb").read()
     checker = checker_client.Checker()
-    
+
     try:
         build_proc = checker.compile_module(source_bytes, module_name)
     except subprocess.CalledProcessError as e:
@@ -72,7 +72,7 @@ def main(source_path: str) -> int:
         print("\n".join(dmesg[-9:]))
     except subprocess.CalledProcessError as e:
         print("Failed to retrieve kernel log:", e, file=sys.stderr)
-        
+
     return 1
 
 if __name__ == "__main__":

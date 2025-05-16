@@ -37,7 +37,7 @@ do
     task_id=$(cat ${task_dir}/task_id.txt)
     solution="${task_dir}/solution.c"
     makefile="${task_dir}/Makefile"
-    tests_dir="${BASE_DIR}tests/"
+    tests_dir="${BASE_DIR}tasks/"
 
     log "$CURRENT_TASK_FILE exists: ${id}, ${task_id}"
 

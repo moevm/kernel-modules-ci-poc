@@ -12,12 +12,12 @@ WORKDIR /app
 
 COPY scripts/pdaemon.sh /app/scripts/pdaemon.sh
 COPY xqueue_watcher /app/xqueue_watcher
-COPY tests /app/tests
+COPY tasks /app/tasks
 
 RUN pip install --no-cache-dir requests
 RUN mkdir status
 RUN touch status/task
 RUN touch status/state
-RUN chmod +x /app/scripts/pdaemon.sh /app/tests/checker.py
+RUN chmod +x /app/scripts/pdaemon.sh /app/tasks/checker.py
 
 ENTRYPOINT ["bash", "/app/scripts/pdaemon.sh"]

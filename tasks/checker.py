@@ -52,7 +52,7 @@ def write_result(result_path: str, data: dict):
 
 def main(id_: str, task_id: str, sol_path: str, _: str) -> int:
     out_dir = f"/app/task_folder/{id_}/"
-    test_path = f"/app/tests/{task_id}/test.py"
+    test_path = f"/app/tasks/{task_id}/test.py"
 
     if not os.path.isfile(test_path):
         print(f"Test file not found: {test_path}", file=sys.stderr)
@@ -75,7 +75,7 @@ def main(id_: str, task_id: str, sol_path: str, _: str) -> int:
         "status": "VERDICT"
     }
 
-    if proc.returncode != 0:
+    if proc.returncode != 1:
         result["error_message"] = f"Module test failed (exit code {proc.returncode})"
 
     write_result(out_dir, result)
