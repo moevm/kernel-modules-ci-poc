@@ -20,21 +20,23 @@
             let
               magicDirectory = "/kernel-sources";
 
-              checkerServer = pkgs.stdenv.mkDerivation {
+              kernelPackages = pkgs.kernelPackages_6_12;
+
+              checkerServer = pkgs.stdenv.mkDerivation rec {
                 name = "checker-server";
                 src = ./checker_server.py;
                 phases = [ "installPhase" "postFixup" ];
 
                 buildInputs = with pkgs; [
-                  nix
                   python3
                   gnumake
                   bash
                   gawk
                   kmod
                   util-linux
-                  linux.dev
-                ] ++ pkgs.linux.nativeBuildInputs ++ pkgs.linux.depsBuildBuild;
+                ]
+                ++ config.boot.kernelPackages.kernel.nativeBuildInputs
+                ++ config.boot.kernelPackages.kernel.depsBuildBuild;
 
                 nativeBuildInputs = [ pkgs.makeWrapper ];
 
@@ -44,16 +46,7 @@
 
                 postFixup = ''
                   wrapProgram $out/bin/checker_server \
-                    --prefix PATH : ${pkgs.lib.makeBinPath (with pkgs; [
-                      nix
-                      python3
-                      gnumake
-                      bash
-                      gawk
-                      kmod
-                      util-linux
-                      linux.dev
-                    ] ++ pkgs.linux.nativeBuildInputs ++ pkgs.linux.depsBuildBuild)}
+                    --prefix PATH : ${pkgs.lib.makeBinPath buildInputs}
                 '';
               };
             in
@@ -62,10 +55,13 @@
                 checkerServer
               ];
 
+              # Fix Linux kernel version
+              boot.kernelPackages = kernelPackages;
+
               # Directly link linux.dev to a fixed directory
               system.activationScripts.linkLinuxDev = {
                 text = ''
-                  ln -sfn ${pkgs.linux.dev} ${magicDirectory}
+                  ln -sfn ${config.boot.kernelPackages.kernel.dev} ${magicDirectory}
                 '';
                 deps = [ ];
               };
